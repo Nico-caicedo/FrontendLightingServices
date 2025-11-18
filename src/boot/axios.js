@@ -56,7 +56,7 @@ import axios from 'axios'
 // Configura la URL base de tu API
 const api = axios.create({ baseURL: ' http://localhost:5054/api' })
 // const api = axios.create({ baseURL: 'http://192.168.0.120/WebApiTotalServis/api/' })
-// const api = axios.create({ baseURL: 'http://192.168.137.1:9096/api/' })
+// const api = axios.create({ baseURL: 'http://192.168.0.120:9096/api/' })
 
 
 

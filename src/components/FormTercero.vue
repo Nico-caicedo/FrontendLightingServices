@@ -2,30 +2,38 @@
     <q-form @submit.prevent="guardarTercero" class="q-gutter-md">
         <div class="row q-col-gutter-md">
             <q-select v-model="tercero.IdTipoIdentificacion" :options="tiposIdentificacion"
-                label="Tipo de Identificación" option-label="label" emit-value map-options option-value="value" class="col-12 col-md-6"
-                outlined />
-            <q-input v-model="tercero.Identificacion" label="Identificación" class="col-12 col-md-6" outlined />
+                label="Tipo de Identificación" option-label="label" emit-value map-options option-value="value"
+                class="col-12 col-md-6" outlined lazy-rules :rules="[Utils.reglaSelect]" />
+            <q-input v-model="tercero.Identificacion" label="Identificación" class="col-12 col-md-6" outlined
+                @blur="validarCedula" />
 
 
 
-            <q-input v-model="tercero.Nombres" label="Nombres" class="col-12 col-md-6" outlined />
-            <q-input v-model="tercero.Apellido1" label="Primer Apellido" class="col-12 col-md-6" outlined />
-            <q-input v-model="tercero.Apellido2" label="Segundo Apellido" class="col-12 col-md-6" outlined />
-            <q-input v-model="tercero.Correo" label="Correo" type="email" class="col-12 col-md-6" outlined />
-            <q-input v-model="tercero.Telefono" label="Teléfono" class="col-12 col-md-6" outlined />
-            <q-input v-model="tercero.Direccion" label="Dirección" class="col-12 col-md-6" outlined />
+            <q-input v-model="tercero.Nombres" label="Nombres" class="col-12 col-md-6" outlined lazy-rules
+                :rules="[Utils.reglaTexto]" />
+            <q-input v-model="tercero.Apellido1" label="Primer Apellido" class="col-12 col-md-6" outlined lazy-rules
+                :rules="[Utils.reglaTexto]" />
+            <q-input v-model="tercero.Apellido2" label="Segundo Apellido" class="col-12 col-md-6" outlined lazy-rules
+                :rules="[Utils.reglaTexto]" />
+            <q-input v-model="tercero.Correo" label="Correo" type="email" class="col-12 col-md-6" outlined lazy-rules
+                :rules="[Utils.reglaTexto]" />
+            <q-input v-model="tercero.Telefono" label="Teléfono" class="col-12 col-md-6" outlined lazy-rules
+                :rules="[Utils.reglaNumero]" />
+            <q-input v-model="tercero.Direccion" label="Dirección" class="col-12 col-md-6" outlined lazy-rules
+                :rules="[Utils.reglaTexto]" />
 
             <q-select v-model="tercero.IdBarrio" :options="barrios" option-label="NombreBarrio" option-value="IdBarrio"
-                label="Barrio" class="col-12 col-md-6" outlined emit-value map-options />
+                label="Barrio" class="col-12 col-md-6" outlined emit-value map-options lazy-rules
+                :rules="[Utils.reglaSelect]" />
 
-          
+
 
 
 
         </div>
 
         <div class="q-mt-md flex justify-end">
-            <q-btn flat label="Cancelar" color="black" v-close-popup />
+            <q-btn flat label="Cancelar" color="black" @click="CancelarCambios" />
             <q-btn label="Guardar" color="grey-7" type="submit" class="q-ml-sm" />
         </div>
     </q-form>
@@ -62,6 +70,23 @@ const tercero = ref({
 
 })
 
+const CancelarCambios = () => {
+    tercero.value = {
+        IdTipoIdentificacion: null,
+        Identificacion: '',
+        Nombres: '',
+        Apellido1: '',
+        Apellido2: '',
+        Correo: '',
+        Telefono: '',
+        NombreCompleto: '',
+        Direccion: '',
+        IdEmpresa: '',
+        IdBarrio: '',
+        IdUsuarioC: '',
+    }
+}
+
 // Opciones para selects
 const tiposIdentificacion = [
     { label: 'Cédula de Ciudadanía', value: 1 },
@@ -91,6 +116,31 @@ const barrios = ref([
     { IdBarrio: 3, NombreBarrio: 'Las Flores' }
 ])
 
+const validarCedula = async () => {
+    if (!tercero.value.Identificacion) return false
+
+    try {
+        const response = await api.post(`/tercero/${tercero.value.Identificacion}/validar-identificacion`)
+
+        if (!response.data.IsExito) {
+            Utils.notificacion("La identificación ya se encuentra registrada.", response.data.IsExito)
+            tercero.value.Identificacion = ''
+            return false
+        }
+
+        return true
+    } catch (error) {
+        console.error(error)
+        Notify.create({
+            message: '❌ Error al validar identificación',
+            color: 'negative',
+            position: 'top'
+        })
+        return false
+    }
+}
+
+
 
 // Si llegan datos por props, los cargamos
 watch(() => props.terceroData, (nuevo) => {
@@ -98,15 +148,34 @@ watch(() => props.terceroData, (nuevo) => {
 }, { immediate: true })
 
 const guardarTercero = async () => {
-    tercero.value.NombreCompleto = `${tercero.value.Nombres} ${tercero.value.Apellido1} ${tercero.value.Apellido2}`.trim()
+    console.log('aludo')
+
+
+
     tercero.value.IdUsuarioC = Usuario.value.IdUsuario
     tercero.value.IdEmpresa = Usuario.value.IdEmpresa
     console.log(tercero.value)
     // Aquí puedes hacer el POST o PUT a tu API
     // Por ejemplo:
     // await api.post('/api/Tercero', tercero.value)
-    const response = await api.post('/tercero/crear-tercero', tercero.value) // 👈 aquí está la diferencia
-    
+    const response = await api.post('/tercero/crear-tercero', tercero.value)
+    Utils.notificacion(response.data.Mensaje, response.data.IsExito)
+    tercero.value = {
+
+        IdTipoIdentificacion: null,
+        Identificacion: '',
+        Nombres: '',
+        Apellido1: '',
+        Apellido2: '',
+        Correo: '',
+        Telefono: '',
+        NombreCompleto: '',
+        Direccion: '',
+        IdEmpresa: '',
+        IdBarrio: '',
+        IdUsuarioC: '',
+
+    }
 
 
     emit('tercero-guardado', response.data)

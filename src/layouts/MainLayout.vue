@@ -1,45 +1,9 @@
 <template>
-  <q-layout view="hHh lpR fFf" class="T-primary">
-    <q-header items-align="center" class="q-pl-sm q-pr-sm row items-center"
-      style="height: 55px;background-color: #2070B7; ">
-      <div class="row col-md-7 col-sm-5 col-xs-7">
-        <q-btn style="width: 30px;" dense flat round icon="menu" @click="cerrarMenu" />
-        <!-- <span class="text-h5 row items-center justify-start q-ml-md" style="width: 240px;">
-        </span> -->
-        <span style="border-radius: 5px;" class="column items-start justify-center">
-          <!-- <q-img style="width: 150px; height: 45px;" src="~assets/logo1.png" /> -->
-           <div class="text-h6 text-weight-bold text-white q-ml-sm letter-spacing-wide">
-          Lighting Services
-        </div>
-        </span>
-      </div>
-      <div class="row col-md-5 row items-center col-sm-6 col-xs-5 justify-end">
-
-        <q-separator vertical color="white" class="q-mr-xs" inset size=".2em" />
-        <q-btn dense flat size="md">
-          <q-icon name="account_circle" />
-          <q-menu>
-            <div class="row no-wrap q-pa-md">
-              <div class="column">
-                <div class="text-h6 q-mb-md">Mis perfil</div>
-                <q-separator inset class="q-mb-sm bg-principal" />
-                <q-btn flat="" @click="isCambiarPassword = !isCambiarPassword"><q-icon name="password"
-                    class="q-mr-sm" />Cambiar
-                  clave</q-btn>
-                <q-btn class="q-mt-md" size="md" color="red" @click="cerrarSesion"><q-icon name="closed"
-                    class="q-mr-sm " />Salir</q-btn>
-              </div>
-            </div>
-          </q-menu>
-          <q-tooltip class="text-grey-1 text-body2 bg-grey-5">Perfil</q-tooltip>
-        </q-btn>
-      </div>
-
-    </q-header>
+  <q-layout view="lHh Lpr lFf" class="T-primary">
 
 
 
-    <q-drawer bordered class="q-pa-sm q-pt-md" v-model="visibilidadMenu">
+    <q-drawer bordered class="nav-drawer q-pa-md" v-model="visibilidadMenu" :width="280">
 
       <!-- <header class="row q-pr-sm justify-between"><span class="row items-center">
           <h4 class="q-ma-none row">Red<div class="contenedor">
@@ -52,16 +16,33 @@
         <q-btn size="lg" dense flat round icon="close" @click="cerrarMenu" />
       </header> -->
 
-      <article class="column  q-mt-md q-pt-md q-pb-md items-center justify-around">
-        <q-icon color="grey-7" size="lg" name="account_circle" />
-        <span class="column q-mt-sm items-center justiy-center">
-          <p class="text-body2 text-bold q-mb-xs text-grey-8">{{ UsuarioSesion.NombreCompleto }}</p>
-          <p class="text-caption q-ma-none text-bold text-grey-8">{{ UsuarioSesion.Rol }}</p>
-        </span>
-  
-      </article>
+      <section class="brand-header row items-center q-mb-sm">
+        <div class="row items-center no-wrap">
+          <div class="brand-icon flex flex-center">
+            <q-icon name="assignment" color="white" size="28px" />
+          </div>
+          <div class="q-ml-sm">
+            <div class="text-subtitle1 text-weight-bold text-blue-grey-10">Lighting Services</div>
+           
+          </div>
+        </div>
+        <q-space />
+        <!-- <q-btn
+          aria-label="Ocultar menú"
+          round
+          flat
+          :dense="!$q.screen.lt.md"
+          :size="$q.screen.lt.md ? 'lg' : 'md'"
+          icon="chevron_left"
+          class="brand-toggle"
+          @click="cerrarMenu"
+        /> -->
+      </section>
 
-      <q-scroll-area class="bg-white q-mt-sm text-grey-9" style="height: calc(100% - 320px);">
+      <q-separator class="q-mb-sm" />
+      <div class="text-caption text-blue-grey-6 q-mb-xs letter-spacing-wide">NAVEGACIÓN</div>
+
+      <q-scroll-area class="bg-white text-grey-9" style="height: calc(100% - 220px);">
 
         <template v-if="OpcionesMenu.length === 0">
           <q-item :key="i" v-for="i in 6">
@@ -78,16 +59,21 @@
             </q-item-section>
           </q-item>
         </template>
-        <q-list v-else padding>
+        <q-list v-else padding class="nav-list">
           <MenuDinamico :items="OpcionesMenu" :idMenuActivo="idMenu" @seleccionar="mostrarComponenteMenu" />
         </q-list>
       </q-scroll-area>
 
-      <q-separator color="grey-5" class="q-mt-xl" size="1.5px" />
-      <div class="row justify-center q-mt-md items-center">
-        <q-btn size="md" label="Cerrar sesión" flat @click="cerrarSesion" color="principal" icon="logout" />
+      <q-separator color="grey-4" class="q-mt-md" size="1px" />
+      <div class="row justify-between items-center q-mt-sm">
+        <div class="column text-blue-grey-6">
+          <div class="text-caption">&nbsp;</div>
+        </div>
+        <q-btn size="md" label="Cerrar Sesión" flat @click="cerrarSesion" color="blue-grey-7" icon="logout" />
       </div>
     </q-drawer>
+
+    
 
     <!-- Menu -->
     <main :style="{ marginLeft: $q.screen.lt.md ? '0%' : '299px' }" v-if="isVistasVisible"
@@ -144,8 +130,23 @@
         </q-form>
       </q-card>
     </q-dialog>
-    <q-page-container class="F-secundary absolute-bottom full-width full-height absolute-left">
-      <router-view />
+    <q-page-container class="app-content">
+      <div class="page-wrapper">
+        <div class="page-header row items-center justify-between q-mb-md">
+          <q-btn
+            aria-label="Alternar menú"
+            round
+            flat
+            :dense="!$q.screen.lt.md"
+            :size="$q.screen.lt.md ? 'lg' : 'md'"
+            :icon="visibilidadMenu ? 'chevron_left' : 'menu'"
+            class="brand-toggle"
+            @click="cerrarMenu"
+          />
+          <div class="row items-center"></div>
+        </div>
+        <router-view />
+      </div>
     </q-page-container>
   </q-layout>
 </template>
@@ -249,7 +250,7 @@ window.addEventListener('storage', async (event) => {
       if (response === null) {
         Utils.notificacion("La sesión ha sido eliminada en otra ventana", null)
         setTimeout(() => {
-          router.push('/oficinavirtual')
+          router.push('/ordenservicio')
         }, 3000)
         return
       }
@@ -418,4 +419,112 @@ onMounted(async () => {
 .clase-activa {
   background-color: #fcfafa;
 }
+
+/* ===== Drawer moderno ===== */
+.nav-drawer {
+  background: #ffffff;
+  border-right: 1px solid #eef0f4;
+}
+.brand-header { padding: 8px 4px 12px 4px; }
+.brand-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2ecc71 0%, #f1c40f 100%);
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.25);
+}
+.letter-spacing-wide { letter-spacing: .4px; }
+.nav-list {
+  --nav-active-bg: rgba(46, 204, 113, 0.12);
+  --nav-active-color: #1e7a3b;
+  --nav-hover-bg: #f5f7fb;
+}
+.nav-list .q-item {
+  margin: 4px 6px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  transition: background .15s ease, color .15s ease;
+}
+.nav-list .q-item:hover { background: var(--nav-hover-bg); }
+.nav-list .q-item--active,
+.nav-list .q-router-link--active,
+.nav-list .q-item.q-item--active {
+  position: relative;
+  background: linear-gradient(90deg, var(--nav-active-bg) 0%, rgba(241, 196, 15, 0.08) 100%);
+  color: var(--nav-active-color);
+}
+.nav-list .q-item--active .q-icon,
+.nav-list .q-router-link--active .q-icon { color: var(--nav-active-color); }
+.nav-list .q-item--active::before,
+.nav-list .q-router-link--active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 60%;
+  background: #1e7a3b;
+  border-radius: 0 12px 12px 0;
+}
+
+/* ===== Contenido ===== */
+.app-content { background: #f6f8fb; }
+.page-wrapper { padding: 0 12px 12px; }
+@media (min-width: 768px) { .page-wrapper { padding: 0 18px 18px; } }
+@media (min-width: 1280px) { .page-wrapper { padding: 0 24px 24px; } }
+
+/* Encabezado interno con tono blanco como el menú */
+.page-header {
+  min-height: 56px;
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 0;
+  padding: 6px 10px;
+  box-shadow: 0 1px 2px rgba(16,24,40,.06);
+  margin-left: -12px;
+  margin-right: -12px;
+}
+@media (min-width: 768px) {
+  .page-header { margin-left: -18px; margin-right: -18px; }
+}
+@media (min-width: 1280px) {
+  .page-header { margin-left: -24px; margin-right: -24px; }
+}
+@media (max-width: 599px) {
+  .page-header { border-radius: 0; padding: 4px 8px; }
+}
+
+/* Botón para alternar el drawer dentro del header */
+.brand-toggle {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  color: #546e7a; /* blue-grey-7 aprox */
+  box-shadow: 0 1px 2px rgba(16,24,40,.06);
+}
+.brand-toggle:hover { background: #f7f9fc; }
+
+/* Marcador lateral para desktop cuando el menú está oculto */
+.menu-bookmark {
+  position: fixed;
+  top: 88px;
+  left: 0;
+  width: 36px;
+  height: 44px;
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  color: #546e7a;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 2px 6px rgba(16,24,40,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1800;
+}
+.menu-bookmark:hover { background: #f7f9fc; }
 </style>

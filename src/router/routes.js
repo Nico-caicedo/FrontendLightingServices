@@ -45,7 +45,7 @@ const routes = [
     component: () => import("layouts/MainLayout.vue"),
     children: [
       {
-        path: "/inventario",
+        path: "/inventario/bodega",
         component: () => import("src/pages/Inventario/InventarioPage.vue"),
       },
       {
@@ -67,12 +67,12 @@ const routes = [
         component: () => import("src/pages/Administracion/GestionVistas.vue"),
       },
       {
-        path: "/administracion/movimientos",
-        component: () => import("src/pages/Inventario/MovimientoPage.vue"),
+        path: "/administracion/gestionpersonal",
+        component: () => import("src/pages/Administracion/GestionPersonal.vue"),
       },
       {
-        path: "/inventario/solicitudes",
-        component: () => import("src/pages/Inventario/SolicitudesPages.vue"),
+        path: "/administracion/mapa",
+        component: () => import("src/pages/Mapas/MapasPages.vue"),
       },
     ],
   },

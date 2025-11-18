@@ -1,303 +1,330 @@
 <template>
-    <q-page class="q-pa-md bg-grey-2">
-        <div class="text-h5 text-primary q-mb-md">
-            Gestión de Órdenes de Servicio
+    <q-page class="q-pa-md bg-grey-2" style="min-height: 80vh;">
+        <!-- Encabezado -->
+        <div class="orders-header q-mb-md">
+            <div class="text-h4 text-weight-bold text-blue-grey-10">Órdenes de Servicio</div>
+            <div class="text-subtitle2 text-blue-grey-6">Gestiona y monitorea todas tus órdenes de servicio</div>
         </div>
 
-        <!-- Filtro y búsqueda -->
-        <div class="bg-white row full q-gutter-sm q-pa-sm q-ma-sm">
-            <q-input v-model="filtro" label="Buscar por código o técnico" dense clearable outlined />
-            <q-select v-model="estadoFiltro" :options="['Pendiente', 'En validación', 'Aprobada', 'Devuelta']"
-                label="Filtrar por estado" dense clearable outlined />
+        <!-- Buscador y filtros -->
+        <div class="row items-center q-col-gutter-md q-mb-md">
+            <div class="col-12">
+                <q-input v-model="filtro" outlined dense debounce="250"
+                    placeholder="Buscar por radicado, cliente o técnico…" class="search-input">
+                    <template #prepend>
+                        <q-icon name="search" />
+                    </template>
+                    <template #append>
+                        <q-select v-model="estadoFiltro"
+                            :options="['Pendiente', 'En validación', 'Aprobada', 'Devuelta']" dense borderless
+                            emit-value map-options placeholder="Estado" style="min-width: 160px;" />
+                    </template>
+                </q-input>
+            </div>
         </div>
 
-        <!-- Tabla de órdenes -->
-        <q-table title="Órdenes registradas" :rows="ordenesFiltradas" :columns="columnas" row-key="IdOrden" flat
-            bordered dense>
-            <template v-slot:body-cell-acciones="props">
-                <q-td align="center">
-                    <q-btn flat round dense icon="view_headline">
-                        <q-menu>
-                            <q-list style="min-width: 100px">
-                                <q-item clickable v-close-popup @click="verDetalle(props.row)">
-                                    <q-item-section>Ver Orden</q-item-section>
-                                </q-item>
-                                <q-item clickable v-close-popup @click="aprobarOrden(props.row)">
-                                    <q-item-section>Aprobar Orden</q-item-section>
-                                </q-item>
-                                <q-item clickable v-close-popup @click="devolverOrden(props.row)">
-                                    <q-item-section>Devolver Orden</q-item-section>
-                                </q-item>
-                            </q-list>
-                        </q-menu>
-                    </q-btn>
+        <!-- Listado de órdenes como tarjetas -->
+        <div class="column q-gutter-md">
+            <q-card v-for="(o, i) in ordenesFiltradas" :key="i" flat bordered class="cursor-pointer order-card" @click="verDetalle(o)">
+                <q-card-section class="row items-start justify-between">
+                    <div>
+                        <div class="text-subtitle1 text-weight-bold">{{ o.CodigoRadicado }}</div>
+                        <div class="text-body2 text-blue-grey-8 q-mt-xs">Técnico: {{ o.UsuarioTecnico || '—' }}</div>
+                        <div class="row items-center text-blue-grey-7 q-mt-xs">
+                            <q-icon name="event" size="16px" class="q-mr-xs" />
+                            <span>Creada: {{ Utils.formatearFecha(o.FechaRadicado) }}</span>
+                            <q-separator vertical inset class="q-ml-sm q-mr-sm" />
+                            <q-icon name="schedule" size="16px" class="q-mr-xs" />
+                            <span>Ejecución: {{ Utils.formatearFecha(o.FechaEjecucion) }}</span>
+                        </div>
+                    </div>
+                    <div class="column items-end">
+                        <q-badge align="middle" :color="'blue-7'" class="text-white text-caption badge-pill">{{
+                            columnas[4].format ? columnas[4].format(o.EstadoSolicitud) : o.EstadoSolicitud }}</q-badge>
+                    </div>
+                </q-card-section>
+                <q-separator />
+               
+            </q-card>
+            <div v-if="ordenesFiltradas.length === 0" class="text-blue-grey-6 q-pt-xl q-pb-xl text-center">No hay
+                órdenes que
+                coincidan con la búsqueda.</div>
+        </div>
 
-                </q-td>
-            </template>
-        </q-table>
-
-        <!-- Diálogo de detalle -->
+        <!-- Detalle de la orden -->
         <q-dialog v-model="dialogoDetalle" maximized full-width>
             <q-card style="min-width: 400px">
-                <!-- CABECERA -->
-                <q-toolbar class="bg-blue-grey-9 text-white">
-                    <q-toolbar-title>Detalles de la Orden</q-toolbar-title>
+                <div class="row items-center justify-between q-pa-md order-detail-header">
+                    <div class="row items-center">
+                        <q-btn flat dense round icon="arrow_back" @click="dialogoDetalle = false" class="q-mr-sm" />
+                        <div class="text-h5 text-weight-bold q-mr-sm">{{ ordenSeleccionada.CodigoRadicado }}</div>
+                        <q-badge color="blue-7" class="text-white">{{ columnas[4].format ?
+                            columnas[4].format(ordenSeleccionada.EstadoSolicitud) : ordenSeleccionada.EstadoSolicitud
+                        }}</q-badge>
+                    </div>
                     <q-btn flat round dense icon="close" v-close-popup @click="VaciarObservacion" />
-                </q-toolbar>
+                </div>
 
                 <q-card-section>
-                    <!-- INFORMACIÓN GENERAL -->
-                    <div class="q-pa-sm bg-grey-2 rounded-borders q-mb-md">
-                        <div class="text-h6 text-primary q-mb-sm">Información del PQRS</div>
+                    <!-- Información General -->
+                    <q-card flat bordered class="bg-white q-pa-md radius-12 q-mb-md">
+                        <div class="row items-start justify-between q-mb-sm">
+                            <div class="text-subtitle1 text-weight-bold">Información General</div>
+                        </div>
                         <div class="row q-col-gutter-md">
                             <div class="col-12 col-md-6">
-                                <p><b>Código Radicado:</b> {{ InfoPqrs?.CodigoRadicado }}</p>
-                                <p><b>Código Documento:</b> {{ InfoPqrs?.CodigoDocumento }}</p>
-                                <p><b>Barrio:</b> {{ InfoPqrs?.NombreBarrio }}</p>
+                                <div class="info-row"><span class="info-label">Cliente</span><span class="info-value">{{
+                                    InfoPqrs?.NombreCompleto || '—' }}</span></div>
+                                <div class="info-row"><span class="info-label">Dirección</span><span
+                                        class="info-value">{{
+                                            InfoPqrs?.Direccion || '—' }}</span></div>
+                                <div class="info-row"><span class="info-label">Descripción</span><span
+                                        class="info-value">{{
+                                            InfoPqrs?.Descripcion || '—' }}</span></div>
                             </div>
                             <div class="col-12 col-md-6">
-                                <p><b>Nombre:</b> {{ InfoPqrs?.NombreCompleto }}</p>
-                                <p><b>Dirección:</b> {{ InfoPqrs?.Direccion }}</p>
-                                <p><b>Correo:</b> {{ InfoPqrs?.Correo }}</p>
+                                <div class="info-row"><span class="info-label">Fecha de creación</span><span
+                                        class="info-value">{{ Utils.formatearFecha(InfoPqrs?.FechaRadicado) }}</span>
+                                </div>
+                                <div class="info-row"><span class="info-label">Fecha programada</span><span
+                                        class="info-value">{{ Utils.formatearFecha(InfoPqrs?.FechaEjecucion) }}</span>
+                                </div>
+                                <div class="info-row"><span class="info-label">Prioridad</span><q-badge color="red-5"
+                                        class="q-ml-xs">Alta</q-badge></div>
                             </div>
                         </div>
+                    </q-card>
+
+                    <!-- Actividades -->
+                    <div>
+                        <div class="text-h6 text-weight-bold q-mb-sm">Actividades</div>
+                        <q-list bordered separator class="radius-12 bg-white">
+                            <q-item v-for="(actividad, index) in Actividades" :key="index" clickable
+                                @click="verActividad(actividad)">
+                                <q-item-section>
+                                    <q-item-label class="text-weight-medium">{{ actividad.TipoOperacion
+                                    }}</q-item-label>
+                                    <q-item-label caption>{{ actividad.TipoTrabajo }}</q-item-label>
+                                </q-item-section>
+                                <q-item-section side>
+                                    <q-icon name="chevron_right" />
+                                </q-item-section>
+                            </q-item>
+                            <q-item v-if="!Actividades || !Actividades.length">
+                                <q-item-section>
+                                    <q-item-label class="text-grey">No hay actividades registradas.</q-item-label>
+                                </q-item-section>
+                            </q-item>
+                        </q-list>
                     </div>
 
-                    <!-- LUMINARIA VIEJA Y NUEVA -->
-                    <div class="q-pa-md">
-                        <div class="text-h6 text-primary q-mb-md">Lista de Actividades</div>
+                    <!-- Modal Actividad -->
+                    <q-dialog v-model="dialogoActividad">
+                        <q-card style="width: 900px; max-width: 95vw;">
+                            <div class="row items-center justify-between q-pa-md order-detail-header">
+                                <div class="row items-center">
+                                    <div class="actividad-titulo text-h5 text-weight-bold q-mr-sm">{{ actividadActual?.TipoTrabajo }}
+                                    </div>
+                                    <!-- <q-badge color="grey-2" text-color="blue-grey-9" class="actividad-badge-pill">{{ actividadActual?.TipoTrabajo
+                                    }}</q-badge> -->
+                                </div>
+                                <q-btn flat round dense icon="close" v-close-popup />
+                            </div>
 
-                        <!-- Lista interactiva de actividades -->
-                        <q-list bordered separator>
-                            <q-expansion-item v-for="(actividad, index) in Actividades" :key="index" expand-separator
-                                icon="engineering" :label="actividad.TipoOperacion"
-                                :caption="`Tipo Trabajo: ${actividad.TipoTrabajo} | Vieja: ${actividad.CodigoLuminariaVieja}  |  Nueva: ${actividad.CodigoLuminariaNueva}`"
-                                header-class="bg-grey-2 text-primary text-bold">
-                                <q-card flat bordered class="q-mt-sm q-pa-sm bg-grey-1">
-                                    <q-card-section>
-                                        <div class="row q-col-gutter-md q-mb-md">
-                                            <!-- Luminaria Vieja -->
-                                            <div class="col-12 col-md-6">
-                                                <q-card flat bordered>
-                                                    <q-card-section class="bg-grey-3">
-                                                        <div class="text-subtitle1 text-primary text-center">
-                                                            Luminaria Vieja
-                                                        </div>
-                                                    </q-card-section>
-                                                    <q-markup-table flat dense separator="cell">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td>Código</td>
-                                                                <td>{{ actividad.CodigoLuminariaVieja }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Clase</td>
-                                                                <td>{{ actividad.ClaseLuminariaVieja }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Tipo</td>
-                                                                <td>{{ actividad.TipoLuminariaVieja }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Potencia</td>
-                                                                <td>{{ actividad.TipoPotenciaVieja }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Marca</td>
-                                                                <td>{{ actividad.MarcaLuminariaVieja }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Estado</td>
-                                                                <td>{{ actividad.EstadoLuminariaVieja }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Verificación</td>
-                                                                <td>{{ actividad.VerificacionVieja }}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </q-markup-table>
-                                                </q-card>
-                                            </div>
+                            <q-separator />
 
-                                            <!-- Luminaria Nueva -->
-                                            <div class="col-12 col-md-6">
-                                                <q-card flat bordered>
-                                                    <q-card-section class="bg-grey-3">
-                                                        <div class="text-subtitle1 text-positive text-center">
-                                                            Luminaria Nueva
-                                                        </div>
-                                                    </q-card-section>
-                                                    <q-markup-table flat dense separator="cell">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td>Código</td>
-                                                                <td>{{ actividad.CodigoLuminariaNueva }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Clase</td>
-                                                                <td>{{ actividad.ClaseLuminariaNueva }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Tipo</td>
-                                                                <td>{{ actividad.TipoLuminariaNueva }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Potencia</td>
-                                                                <td>{{ actividad.TipoPotenciaNueva }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Marca</td>
-                                                                <td>{{ actividad.MarcaLuminariaNueva }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Estado</td>
-                                                                <td>{{ actividad.EstadoLuminariaNueva }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Verificación</td>
-                                                                <td>{{ actividad.VerificacionNueva }}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </q-markup-table>
-                                                </q-card>
-                                            </div>
-                                        </div>
-                                    </q-card-section>
-                                    <q-card-section>
-                                        <div class="q-mt-md">
-                                            <div class="text-h6 text-primary q-mb-sm col-8 col-sm-3 col-md-4 col-lg-3">
-                                                Materiales Utilizados
-                                            </div>
-                                            <q-list bordered separator class="rounded-borders bg-grey-1">
-                                                <q-item v-for="(m, index) in actividad.Materiales" :key="index">
-                                                    <q-item-section>
-                                                        <q-item-label><b>{{ m.Material }}</b></q-item-label>
-                                                        <q-item-label caption>
-                                                            Cantidad: {{ m.CantidadMaterial }} {{ m.Unidad }} — {{
-                                                                m.Tipo }}
-                                                        </q-item-label>
-                                                    </q-item-section>
-                                                </q-item>
-                                                <q-item v-if="!actividad.Materiales || !actividad.Materiales.length">
-                                                    <q-item-section>
-                                                        <q-item-label class="text-grey">No se registraron
-                                                            materiales.</q-item-label>
-                                                    </q-item-section>
-                                                </q-item>
-                                            </q-list>
-                                        </div>
-                                    </q-card-section>
-                                    <q-card-section>
-                                        <div class="q-pa-md evidencias-container">
-                                            <!-- Título -->
-                                            <div class="text-h6 text-weight-bold text-primary q-mb-lg text-center">
-                                                Lista de Evidencias
-                                            </div>
-
-                                            <!-- Contenedor de tarjetas responsive -->
-                                            <div class="row q-col-gutter-md justify-center">
-                                                <div v-for="(evidencia, index) in actividad.Evidencias" :key="index"
-                                                    class="col-10 col-sm-3 col-md-3 col-lg-3">
-                                                    <q-card flat bordered
-                                                        class="hover-card column items-center q-pa-sm">
-                                                        <!-- Imagen de evidencia -->
-                                                        <q-img :src="evidencia.Ruta" ratio="1" spinner-color="primary"
-                                                            class="rounded-borders shadow-1">
-                                                            <div
-                                                                class="absolute-bottom bg-black bg-opacity-40 text-white text-center q-pa-xs text-caption truncate">
-                                                                {{ evidencia.Nombre || `Evidencia ${index + 1}` }}
-                                                            </div>
-                                                        </q-img>
-
-                                                        <!-- Botón de acción -->
-                                                        <q-card-actions align="center" class="q-mt-xs">
-                                                            <q-btn flat color="primary" icon="visibility" label="Ver"
-                                                                class="btn-ver" @click="verEvidencia(evidencia)" />
-                                                        </q-card-actions>
-                                                    </q-card>
+                            <q-card-section>
+                                <div class="row q-col-gutter-md q-mb-md">
+                                    <!-- Luminaria Vieja -->
+                                    <div class="col-12 col-md-6">
+                                        <q-card flat bordered>
+                                            <q-card-section class="bg-grey-3">
+                                                <div class="text-subtitle1 text-primary text-center">Luminaria Vieja
                                                 </div>
+                                            </q-card-section>
+                                            <q-markup-table flat dense separator="cell">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Código</td>
+                                                        <td>{{ actividadActual?.CodigoLuminaria }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Clase</td>
+                                                        <td>{{ actividadActual?.ClaseLuminaria }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Tipo</td>
+                                                        <td>{{ actividadActual?.TipoLuminaria }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Potencia</td>
+                                                        <td>{{ actividadActual?.TipoPotencia }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Marca</td>
+                                                        <td>{{ actividadActual?.MarcaLuminariaVieja }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Estado</td>
+                                                        <td>{{ actividadActual?.EstadoLuminaria }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Verificación</td>
+                                                        <td>{{ actividadActual?.Verificacion }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </q-markup-table>
+                                        </q-card>
+                                    </div>
+
+                                    <!-- Luminaria Nueva -->
+                                    <div class="col-12 col-md-6">
+                                        <q-card flat bordered>
+                                            <q-card-section class="bg-grey-3">
+                                                <div class="text-subtitle1 text-positive text-center">Luminaria Nueva
+                                                </div>
+                                            </q-card-section>
+                                            <q-markup-table flat dense separator="cell">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Código</td>
+                                                        <td>{{ actividadActual?.CodigoLuminariaNueva }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Clase</td>
+                                                        <td>{{ actividadActual?.ClaseLuminariaNueva }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Tipo</td>
+                                                        <td>{{ actividadActual?.TipoLuminariaNueva }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Potencia</td>
+                                                        <td>{{ actividadActual?.TipoPotenciaNueva }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Marca</td>
+                                                        <td>{{ actividadActual?.MarcaLuminariaNueva }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Estado</td>
+                                                        <td>{{ actividadActual?.EstadoLuminariaNueva }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Verificación</td>
+                                                        <td>{{ actividadActual?.VerificacionNueva }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </q-markup-table>
+                                        </q-card>
+                                    </div>
+                                </div>
+                            </q-card-section>
+
+                            <q-separator />
+
+                            <q-card-section>
+                                <div class="q-mt-md">
+                                    <q-item dense class="section-title q-pl-none">
+                                        <q-item-section avatar>
+                                            <q-icon name="category" color="blue-grey-7" />
+                                        </q-item-section>
+                                        <q-item-section>
+                                            <q-item-label class="text-subtitle1 text-weight-bold">Materiales
+                                                Utilizados</q-item-label>
+                                        </q-item-section>
+                                    </q-item>
+                                    <q-list class="q-mt-sm">
+                                        <q-item v-for="(m, mi) in actividadActual?.Materiales" :key="mi"
+                                            class="material-row rounded-16 q-mb-sm">
+                                            <q-item-section>
+                                                <q-item-label class="text-body1">{{ m.Material }}</q-item-label>
+                                                <q-item-label caption>{{ m.Tipo }}</q-item-label>
+                                            </q-item-section>
+                                            <q-item-section side>
+                                                <q-chip square color="blue-grey-2" text-color="blue-grey-8">{{
+                                                    m.CantidadMaterial }} {{ m.Unidad }}</q-chip>
+                                            </q-item-section>
+                                        </q-item>
+                                        <q-item
+                                            v-if="!actividadActual || !actividadActual.Materiales || !actividadActual.Materiales.length">
+                                            <q-item-section>
+                                                <q-item-label class="text-grey">No se registraron
+                                                    materiales.</q-item-label>
+                                            </q-item-section>
+                                        </q-item>
+                                    </q-list>
+                                </div>
+                            </q-card-section>
+
+                            <q-card-section>
+                                <div class="q-pa-md evidencias-container">
+                                    <q-item dense class="section-title q-pl-none q-mb-sm">
+                                        <q-item-section avatar>
+                                            <q-icon name="collections" color="blue-grey-7" />
+                                        </q-item-section>
+                                        <q-item-section>
+                                            <q-item-label
+                                                class="text-subtitle1 text-weight-bold">Evidencias</q-item-label>
+                                        </q-item-section>
+                                    </q-item>
+                                    <div class="row q-col-gutter-md">
+                                        <div v-for="(evidencia, ei) in actividadActual?.Evidencias" :key="ei"
+                                            class="col-6 col-sm-4 col-md-3">
+                                            <div class="evidence-card">
+
+                                                <img :src="evidencia.Ruta" class="evidence-img"
+                                                    @click="verEvidencia(evidencia)" />
+                                                <div class="absolute-top-right q-pa-sm">
+                                                    <q-btn round dense flat icon="visibility" color="white"
+                                                        @click.stop="verEvidencia(evidencia)" />
+                                                </div>
+
                                             </div>
                                         </div>
-                                    </q-card-section>
-                                </q-card>
-                            </q-expansion-item>
-                        </q-list>
-                    </div>
+                                    </div>
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                    </q-dialog>
 
-                    <!-- LISTA DE MATERIALES -->
-                    <div class="q-mt-md">
-                        <div class="text-h6 text-primary q-mb-sm col-8 col-sm-3 col-md-4 col-lg-3">Materiales Utilizados
-                        </div>
-                        <q-list bordered separator class="rounded-borders bg-grey-1">
-                            <q-item v-for="(m, index) in Materiales" :key="index">
-                                <q-item-section>
-                                    <q-item-label><b>{{ m.Material }}</b></q-item-label>
-                                    <q-item-label caption>
-                                        Cantidad: {{ m.CantidadMaterial }} {{ m.Unidad }} — {{ m.Tipo }}
-                                    </q-item-label>
-                                </q-item-section>
-                            </q-item>
-                            <q-item v-if="!Materiales || !Materiales.length">
-                                <q-item-section>
-                                    <q-item-label class="text-grey">No se registraron materiales.</q-item-label>
-                                </q-item-section>
-                            </q-item>
-                        </q-list>
-                    </div>
-                    <div class="q-pa-md evidencias-container">
-                        <!-- Título -->
-                        <div class="text-h6 text-weight-bold text-primary q-mb-lg text-center">
-                            Lista de Evidencias
-                        </div>
-
-                        <!-- Contenedor de tarjetas responsive -->
-                        <div class="row q-col-gutter-md justify-center">
-                            <div v-for="(evidencia, index) in Evidencias" :key="index"
-                                class="col-10 col-sm-3 col-md-3 col-lg-3">
-                                <q-card flat bordered class="hover-card column items-center q-pa-sm">
-                                    <!-- Imagen de evidencia -->
-                                    <q-img :src="evidencia.Ruta" ratio="1" spinner-color="primary"
-                                        class="rounded-borders shadow-1">
-                                        <div
-                                            class="absolute-bottom bg-black bg-opacity-40 text-white text-center q-pa-xs text-caption truncate">
-                                            {{ evidencia.Nombre || `Evidencia ${index + 1}` }}
-                                        </div>
-                                    </q-img>
-
-                                    <!-- Botón de acción -->
-                                    <q-card-actions align="center" class="q-mt-xs">
-                                        <q-btn flat color="primary" icon="visibility" label="Ver" class="btn-ver"
-                                            @click="verEvidencia(evidencia)" />
-                                    </q-card-actions>
-                                </q-card>
-                            </div>
-                        </div>
-                    </div>
                 </q-card-section>
 
                 <!-- BOTONES DE CIERRE -->
                 <q-separator />
-                <q-card-actions class="q-gutter-sm" align="right">
-                    <q-btn label="Aprobar Y finalizar" icon="check" color="green" v-close-popup />
-                    <q-btn label="devolver para correción" icon="undo" color="red" @click="ModalObservacion = true" />
-                    <q-btn label="Cerrar" color="grey" v-close-popup />
-                </q-card-actions>
+                <div class="row q-pa-sm">
+                    <div class="col-md-6 col-sm-4 col-12 q-pa-sm ">
+                        <q-btn label="Aprobar Y finalizar" icon="check" color="green" outline v-close-popup
+                            class="full-width bg-green-1" />
+                    </div>
+                    <div class="col-md-6 col-sm-4 col-12 q-pa-sm">
+                        <q-btn label="devolver para correción" icon="undo" color="red" outline
+                            @click="ModalObservacion = true" class="full-width bg-red-1" />
+                    </div>
+                    <div class="col-md-6 col-sm-4 col-12 q-pa-sm">
+                        <q-btn label="Cerrar" color="grey" v-close-popup outline class="full-width bg-grey-1" />
+                    </div>
+                </div>
 
-                <q-dialog v-model="ModalObservacion" style="min-width: 400px">
-                    <q-card style="min-width: 400px">
-                        <q-toolbar class="bg-blue-grey-9 text-white">
-                            <q-toolbar-title>Observacion devolución orden</q-toolbar-title>
-                            <q-btn flat round dense icon="close" v-close-popup @click="VaciarObservacion" />
-                        </q-toolbar>
-                        <q-card-section leave-class="">
-                            <div class="q-gutter-y-sm">
-                                <q-input type="textarea" label="Observación Orden..." v-model="Observacion" />
-                                <div align="center">
-                                    <q-btn label="Ejecutar devolución" icon="undo" color="green"
-                                        @click="EjecutarDevolucion" />
-                                </div>
+
+                <q-dialog v-model="ModalObservacion">
+                    <q-card class="obs-card">
+                        <div class="row items-center justify-between q-pa-md">
+                            <div class="row items-center">
+                                <q-icon name="undo" color="blue-grey-8" class="q-mr-sm" />
+                                <div class="text-subtitle1 text-weight-bold">Devolver orden</div>
                             </div>
+                            <q-btn flat round dense icon="close" v-close-popup @click="VaciarObservacion" />
+                        </div>
+                        <q-separator />
+                        <q-card-section>
+                            <q-input type="textarea" v-model="Observacion" autogrow outlined label="Observación..." />
                         </q-card-section>
+                        <q-separator />
+                        <q-card-actions align="right" class="q-pa-md">
+                            <q-btn  label="Cancelar" class="bg-grey-1"  outline color="blue-grey-7" v-close-popup @click="VaciarObservacion" />
+                            <q-btn label="Ejecutar devolución" icon="undo" color="red" outline class="bg-red-1" @click="EjecutarDevolucion" />
+                        </q-card-actions>
                     </q-card>
                 </q-dialog>
 
@@ -310,9 +337,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useQuasar, Dialog } from 'quasar'
+import { useRouter } from 'vue-router'
 import Utils from 'src/Commons/Utils' // si tienes tu formateador de fechas
 import { api } from 'src/boot/axios'
 const $q = useQuasar()
+const router = useRouter()
 const Evidencias = ref([])
 // Datos simulados (estos normalmente vienen de una API)
 const ordenes = ref([])
@@ -323,11 +352,13 @@ const estadoFiltro = ref(null)
 const dialogoDetalle = ref(false)
 const ordenSeleccionada = ref({})
 const Usuario = ref({})
-const Actividades = ref({})
+const Actividades = ref([])
 const InfoPqrs = ref({})
 const Materiales = ref([])
 const actividadSeleccionada = ref(null)
 const Observacion = ref('')
+const dialogoActividad = ref(false)
+const actividadActual = ref(null)
 const columnas = [
     { name: 'Codigo', label: 'Código Radicado', field: 'CodigoRadicado', align: 'center', sortable: true },
     { name: 'Tecnico', label: 'Técnico', field: 'UsuarioTecnico', align: 'center' },
@@ -407,9 +438,11 @@ const Limpiar = () => {
     dialogoDetalle.value = false
     ModalObservacion.value = false
     Observacion.value = ''
-    Actividades.value = {}
+    Actividades.value = []
     InfoPqrs.value = {}
     Materiales.value = []
+    dialogoActividad.value = false
+    actividadActual.value = null
 }
 
 // Filtros
@@ -431,10 +464,16 @@ const verDetalle = async (orden) => {
     console.log(response)
     const Datos = response.data.Dato
     Actividades.value = Datos.Actividades
-    InfoPqrs.value = Datos.InfoPqrs
+    InfoPqrs.value = Datos.Pqrs
     Materiales.value = Datos.Materiales
     Evidencias.value = Datos.Evidencias
+    console.log(InfoPqrs.value)
 
+}
+
+const verActividad = (actividad) => {
+    actividadActual.value = actividad
+    dialogoActividad.value = true
 }
 
 const aprobarOrden = (orden) => {
@@ -463,7 +502,6 @@ const devolverOrden = (orden) => {
 
 
 onMounted(async () => {
-
     try {
         const user = await Utils.datoUsuario()
         if (!user) {
@@ -475,6 +513,98 @@ onMounted(async () => {
         console.error(error)
     }
     consultarOrdenes()
-
 })
 </script>
+
+<style scoped>
+.orders-header {
+    padding: 8px 0 4px;
+}
+
+.search-input :deep(.q-field__control) {
+    border-color: #e6ebf2;
+}
+
+.order-card {
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 10px rgba(16, 24, 40, .08);
+}
+
+.badge-pill {
+    border-radius: 999px;
+    padding: 4px 8px;
+}
+
+.actividad-titulo {
+    color: #0f172a;
+}
+
+.actividad-badge-pill {
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.radius-12 {
+    border-radius: 12px;
+}
+
+.activity-header {
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.info-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.info-label {
+    width: 140px;
+    color: #607d8b;
+}
+
+.info-value {
+    color: #0f172a;
+}
+
+.evidencias-container .hover-card {
+    width: 100%;
+}
+
+/* Modal Actividad: Materiales y Evidencias */
+.section-title {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.material-row {
+    background: #f5f7fb;
+    padding: 8px 12px;
+}
+
+.rounded-16 {
+    border-radius: 16px;
+}
+
+.evidence-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.evidence-img {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 16px;
+    cursor: zoom-in;
+}
+</style>

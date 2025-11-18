@@ -1,95 +1,223 @@
 <template>
-  <q-page style="height: calc(100vh - 55px); overflow: auto; background-color: #EBEBF0">
-    <EncabezadoParametros parteUno="Gestión" parteDos="Órdenes">
-      <template #botones>
-        <!-- <q-btn color="primary" label="Asignar seleccionadas" :disable="ordenes.length === 0" @click="assignment = true"
-          icon="assignment" class="q-ml-sm" /> -->
-      </template>
-    </EncabezadoParametros>
+  <q-page    class=" bg-grey-2" style="min-height: 80vh;"> 
+  
 
-    <section class="row q-pa-sm">
-      <main class="full-width row q-pa-md q-pt-md q-pb-md br-circle">
-        <q-card class="full-width">
-          <q-tabs v-model="tab" dense class="bg-grey-4 text-white-7" active-color="primary" indicator-color="black"
-            align="justify">
-            <q-tab name="asignar" label="Asignar Órdenes" />
-            <q-tab name="verificacion" label="Ordenes Pendientes" />
-            <q-tab name="finalizadas" label="Órdenes Finalizadas" />
-          </q-tabs>
+    <section class="q-px-lg  q-pb-xl">
+      <!-- Encabezado principal -->
+      <div class="page-header q-mb-sm">
+        <div>
+          <h1 class="page-title">Asignación de Órdenes</h1>
+          <p class="page-subtitle">Gestiona la asignación de técnicos a las órdenes de trabajo</p>
+        </div>
+      </div>
 
-          <q-tab-panels v-model="tab" animated>
-            <!-- PANEL ASIGNAR -->
-            <q-tab-panel name="asignar">
-              <p class="text-center text-h5">Asignar Orden</p>
-              <div class="q-gutter-sm">
-                <div class="row col-12 q-gutter-sm">
-                  <q-input v-model="filtros.texto" filled label="Buscar por número o usuario"
-                    class="col-xs-12 col-sm-6 col-md-5 col-lg" @keyup.enter="consultarOrdenes" />
-                  <q-input v-model="filtros.fechaInicio" filled type="date" label="Fecha Inicio"
-                    class="col-xs-12 col-sm-6 col-md-3 col-lg" />
-                  <q-input v-model="filtros.fechaFin" filled type="date" label="Fecha Fin"
-                    class="col-xs-12 col-sm-6 col-md-3 col-lg" />
-                  <q-btn color="primary" label="Buscar" icon="search" @click="consultarOrdenes"
-                    class="col-xs-12 col-sm-2" />
-                </div>
-
-                <q-table flat bordered title="Órdenes" :rows="rows" :columns="columns" row-key="CodigoRadicado"
-                  selection="multiple" v-model:selected="ordenes" :loading="loading"
-                  no-data-label="No se encontraron órdenes" />
-
-                <div class="row q-col-gutter-md">
-
-                  <!-- SELECT DE CARGO -->
-                  <q-select v-model="cargoSeleccionado" :options="Cargos" option-label="Nombre" option-value="IdRol"
-                    label="Cargo" clearable emit-value map-options class="col-6"
-                    @update:model-value="filtrarUsuariosPorCargo" />
-
-                  <!-- SELECT DE USUARIO -->
-                  <q-select v-model="usuarioSeleccionado" :options="usuariosFiltrados" option-label="NombreCompleto"
-                    option-value="IdUsuario" label="Usuario" use-input emit-value map-options clearable class="col-6"
-                    :disable="!cargoSeleccionado" @filter="filtrarUsuarios">
-                    <template v-slot:option="scope">
-                      <q-item v-bind="scope.itemProps">
-                        <q-item-section avatar>
-                          <q-icon name="person" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label>{{ scope.opt.NombreCompleto }}</q-item-label>
-                          <q-item-label caption>{{ scope.opt.Identificacion }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                    </template>
-
-                    <template v-slot:no-option>
-                      <q-item>
-                        <q-item-section class="text-grey-10">Sin resultados</q-item-section>
-                      </q-item>
-                    </template>
-                  </q-select>
-
-                </div>
-
-                <q-btn @click="AsignarOrdenBd" label="Asignar ordenes" color="black" />
-
+      <!-- Tarjetas de resumen -->
+      <div class="row q-col-gutter-md q-mb-lg">
+        <div class="col-12 col-md-4">
+          <q-card class="stats-card hover-card">
+            <q-card-section class="q-pb-sm">
+              <div class="row items-center justify-between q-mb-xs">
+                <div class="text-subtitle2 text-grey-7">Órdenes pendientes</div>
+                <q-icon name="schedule" size="18px" class="text-positive" />
               </div>
-            </q-tab-panel>
+              <div class="text-h4 text-weight-bold text-grey-10">{{ rows.length }}</div>
+              <div class="text-caption text-grey-6">Esperando asignación</div>
+            </q-card-section>
+          </q-card>
+        </div>
 
-            <!-- PANEL VERIFICACIÓN -->
-            <q-tab-panel name="verificacion">
-              <p class="text-center text-h5">Ordenes Pendientes</p>
-              <q-table flat bordered title="Órdenes" :rows="rowsDos" :columns="columns" row-key="CodigoRadicado"
-                selection="multiple" v-model:selected="ordenes" :loading="loading"
-                no-data-label="No se encontraron órdenes" />
-            </q-tab-panel>
+        <div class="col-12 col-md-4">
+          <q-card class="stats-card hover-card">
+            <q-card-section class="q-pb-sm">
+              <div class="row items-center justify-between q-mb-xs">
+                <div class="text-subtitle2 text-grey-7">En progreso</div>
+                <q-icon name="engineering" size="18px" class="text-primary" />
+              </div>
+              <div class="text-h4 text-weight-bold text-grey-10">{{ rowsDos.length }}</div>
+              <div class="text-caption text-grey-6">Actualmente asignadas</div>
+            </q-card-section>
+          </q-card>
+        </div>
 
-            <!-- PANEL FINALIZADAS -->
-            <q-tab-panel name="finalizadas">
-              <p class="text-center text-h5">Órdenes finalizadas</p>
-              <p class="text-h6 text-grey">Próximamente</p>
-            </q-tab-panel>
-          </q-tab-panels>
-        </q-card>
-      </main>
+        <div class="col-12 col-md-4">
+          <q-card class="stats-card hover-card">
+            <q-card-section class="q-pb-sm">
+              <div class="row items-center justify-between q-mb-xs">
+                <div class="text-subtitle2 text-grey-7">Completadas</div>
+                <q-icon name="task_alt" size="18px" class="text-positive" />
+              </div>
+              <div class="text-h4 text-weight-bold text-grey-10">0</div>
+              <div class="text-caption text-grey-6">Finalizadas este mes</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <!-- Card de gestión de asignaciones -->
+      <q-card class="gestion-card rounded-borders">
+        <q-card-section class="q-pb-none">
+          <div class="row items-start justify-between q-mb-md">
+            <div>
+              <div class="text-subtitle1 text-weight-bold text-grey-9">Gestión de asignaciones</div>
+              <div class="text-caption text-grey-6">Visualiza y asigna técnicos a las órdenes de trabajo</div>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator spaced />
+
+        <q-tabs
+          v-model="tab"
+          class="tabs-header"
+          active-color="primary"
+          indicator-color="transparent"
+          align="justify"
+          dense
+        >
+          <q-tab name="asignar" label="Pendientes" class="tab-pill" />
+          <q-tab name="verificacion" label="En Progreso" class="tab-pill" />
+          <q-tab name="finalizadas" label="Completadas" class="tab-pill" />
+        </q-tabs>
+
+        <q-separator />
+
+        <q-tab-panels v-model="tab" animated>
+          <!-- PANEL ASIGNAR -->
+          <q-tab-panel name="asignar">
+            <div class="q-gutter-md">
+              <div class="row q-col-gutter-sm filter-row">
+                <q-input
+                  v-model="filtros.texto"
+                  filled
+                  label="Buscar por número o usuario"
+                  class="col-12 col-sm-6 col-md-4"
+                  @keyup.enter="consultarOrdenes"
+                />
+                <q-input
+                  v-model="filtros.fechaInicio"
+                  filled
+                  type="date"
+                  label="Fecha inicio"
+                  class="col-12 col-sm-6 col-md-3"
+                />
+                <q-input
+                  v-model="filtros.fechaFin"
+                  filled
+                  type="date"
+                  label="Fecha fin"
+                  class="col-12 col-sm-6 col-md-3"
+                />
+                <div class="col-12 col-sm-3 col-md-2 flex items-end">
+                  <q-btn
+                    color="primary"
+                    label="Buscar"
+                    icon="search"
+                    class="full-width"
+                    @click="consultarOrdenes"
+                  />
+                </div>
+              </div>
+
+              <q-table
+                flat
+                bordered
+                :rows="rows"
+                :columns="columns"
+                row-key="CodigoRadicado"
+                selection="multiple"
+                v-model:selected="ordenes"
+                :loading="loading"
+                no-data-label="No se encontraron órdenes"
+              />
+
+              <div class="row q-col-gutter-md q-pa-md items-end filter-row">
+                <!-- SELECT DE CARGO -->
+                <q-select
+                  v-model="cargoSeleccionado"
+                  :options="Cargos"
+                  option-label="Nombre"
+                  option-value="IdRol"
+                  label="Cargo"
+                  clearable
+                  emit-value
+                  map-options
+                  class="col-12 col-sm-6 q-mb-sm"
+                  @update:model-value="filtrarUsuariosPorCargo"
+                />
+
+                <!-- SELECT DE USUARIO -->
+                <q-select
+                  v-model="usuarioSeleccionado"
+                  :options="usuariosFiltrados"
+                  option-label="NombreCompleto"
+                  option-value="IdUsuario"
+                  label="Usuario"
+                  use-input
+                  emit-value
+                  map-options
+                  clearable
+                  class="col-12 col-sm-6 q-mb-sm"
+                  :disable="!cargoSeleccionado"
+                  @filter="filtrarUsuarios"
+                >
+                  <template v-slot:option="scope">
+                    <q-item v-bind="scope.itemProps">
+                      <q-item-section avatar>
+                        <q-icon name="person" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label>{{ scope.opt.NombreCompleto }}</q-item-label>
+                        <q-item-label caption>{{ scope.opt.Identificacion }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </template>
+
+                  <template v-slot:no-option>
+                    <q-item>
+                      <q-item-section class="text-grey-10">Sin resultados</q-item-section>
+                    </q-item>
+                  </template>
+                </q-select>
+
+                <div class="col-12 q-mt-md flex justify-end">
+                  <q-btn
+                    @click="AsignarOrdenBd"
+                    label="Asignar órdenes seleccionadas"
+                    color="primary"
+                    unelevated
+                  />
+                </div>
+              </div>
+            </div>
+          </q-tab-panel>
+
+          <!-- PANEL VERIFICACIÓN -->
+          <q-tab-panel name="verificacion">
+            <div class="q-gutter-md">
+              <div class="text-subtitle1 text-weight-medium q-mb-sm">Órdenes en progreso</div>
+              <q-table
+                flat
+                bordered
+                :rows="rowsDos"
+                :columns="columns"
+                row-key="CodigoRadicado"
+                selection="multiple"
+                v-model:selected="ordenes"
+                :loading="loading"
+                no-data-label="No se encontraron órdenes"
+              />
+            </div>
+          </q-tab-panel>
+
+          <!-- PANEL FINALIZADAS -->
+          <q-tab-panel name="finalizadas">
+            <div class="q-pa-md text-center text-grey-7">
+              <p class="text-h6 q-mb-xs">Órdenes completadas</p>
+              <p class="text-body2">Próximamente podrás consultar el historial de órdenes finalizadas.</p>
+            </div>
+          </q-tab-panel>
+        </q-tab-panels>
+      </q-card>
     </section>
     <q-dialog v-model="assignment" full-width :maximized="fullscreen" persistent>
       <!-- <q-card class="q-pa-none" style="max-width: 100vw; height: 100vh; border-radius: 0;">
@@ -442,16 +570,95 @@ onMounted(async () => {
 })
 </script>
 <style scoped>
-.hover-card {
-  transition: all 0.2s ease-in-out;
-}
+  .asignacion-page {
+    height: calc(100vh - 55px);
+    overflow: auto;
+    background: #f5f7fb;
+  }
 
-.hover-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-.rounded-borders {
-  border-radius: 12px;
-}
+  .page-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1f2933;
+  }
+
+  .page-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b7b93;
+  }
+
+  .stats-card {
+    border-radius: 14px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+    border: 1px solid #e5e9f0;
+    background: #ffffff;
+  }
+
+  .gestion-card {
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid #e5e9f0;
+    background: #ffffff;
+  }
+
+  .tabs-header {
+    padding: 4px 12px 0;
+    background: transparent;
+  }
+
+  .tab-pill {
+    margin: 0 4px 8px;
+    border-radius: 999px;
+    min-height: 34px;
+    text-transform: none;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .hover-card {
+    transition: all 0.18s ease-in-out;
+  }
+
+  .hover-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+  }
+
+  .rounded-borders {
+    border-radius: 12px;
+  }
+
+  .filter-row {
+    align-items: flex-end;
+  }
+
+  @media (max-width: 767px) {
+    .filter-row > * {
+      margin-bottom: 4px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .asignacion-page {
+      padding-bottom: 16px;
+    }
+
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .page-title {
+      font-size: 22px;
+    }
+  }
 </style>

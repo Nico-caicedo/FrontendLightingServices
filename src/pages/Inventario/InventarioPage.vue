@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md bg-grey-2">
-    <q-card flat bordered class="q-pa-md">
+    <q-card flat bordered class="q-pa-md inv-card">
 
       <div class="row items-center justify-between q-mb-md">
         <div class="text-h5 text-primary">
@@ -17,7 +17,7 @@
       </div>
 
       <!-- FILTROS -->
-      <div class="row q-col-gutter-md q-mb-md">
+      <div class="filters row q-col-gutter-md q-pa-sm q-mb-md bg-grey-1 rounded-borders">
         <q-input
           filled
           v-model="filtros.busqueda"
@@ -55,13 +55,28 @@
         flat
         bordered
         dense
+        :grid="false"
+        separator="horizontal"
+        :rows-per-page-options="[5,10,20,50]"
         :pagination.sync="paginacion"
+        class="inv-table"
+        wrap-cells
+        :hide-bottom="productosFiltrados.length <= paginacion.rowsPerPage"
+        virtual-scroll
+        :virtual-scroll-item-size="52"
       >
         <template #body-cell-acciones="props">
           <q-td align="center">
             <q-btn icon="edit" size="sm" color="primary" flat round @click="editarProducto(props.row)" />
             <q-btn icon="delete" size="sm" color="negative" flat round @click="eliminarProducto(props.row)" />
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="column items-center q-pa-lg text-grey-6" style="min-height: 160px">
+            <q-icon name="inventory_2" size="48px" class="q-mb-sm" />
+            <div class="text-subtitle2">Sin resultados</div>
+            <div class="text-caption">Ajusta los filtros o agrega un material.</div>
+          </div>
         </template>
       </q-table>
     </q-card>
@@ -130,6 +145,7 @@ const filtros = ref({
   categoria: null,
   marca: null
 })
+
 
 const productos = ref([
   {
@@ -226,3 +242,11 @@ const eliminarProducto = (producto) => {
   productos.value = productos.value.filter(p => p.id !== producto.id)
 }
 </script>
+
+<style scoped>
+.inv-card { max-width: 1200px; margin: 0 auto; }
+.filters { border: 1px solid rgba(0,0,0,0.06); }
+.inv-table :deep(thead th) { position: sticky; top: 0; background: white; z-index: 1; }
+.inv-table :deep(.q-table__grid-content) { padding: 8px; }
+.inv-table :deep(.q-table__card .q-table__grid-item) { border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; padding: 8px; }
+</style>
