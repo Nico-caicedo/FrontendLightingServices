@@ -1,15 +1,19 @@
 <template>
-    <q-page style="height: calc(100vh - 55px); overflow: auto; background-color: #EBEBF0">
-        <EncabezadoParametros parteUno="Crear" parteDos="Tramite">
-            <template #botones>
-                <q-btn flat icon="description" color="grey-7" @click="AbrirFormularioPqrs" :title="'Agregar Tercero'" />
-            </template>
+    <q-page style="min-height: 60vh; ">
 
-        </EncabezadoParametros>
-        <section class="row q-pa-sm">
-            <main class="full-width row q-pa-md q-pt-md q-pb-md br-circle">
-                <q-form ref="formRef" @submit.prevent.stop="onSubmit" @reset="onReset"
-                    class="row col-12 q-col-gutter-md">
+
+        <section class="row  justify-center">
+           
+                <q-card class="q-pa-lg bg-white shadow-1" style="border-radius: 18px; ">
+                    <div class="row items-center justify-between q-mb-sm">
+                        <div class="text-h6 text-grey-9">Crear Nueva Orden</div>
+                        <q-btn outline dense color="primary" class="bg-blue-1" icon="list_alt" label="Gestionar Órdenes"
+                            @click="AbrirFormularioPqrs" />
+                    </div>
+                    <q-separator class="q-mb-md" />
+
+                    <q-form ref="formRef" @submit.prevent.stop="onSubmit" @reset="onReset"
+                        class="row col-12 q-col-gutter-sm">
 
                     <q-input flat outlined v-model="Pqrs.CodigoRadicado" label="PQRS No."
                         class="col-xs-12 col-sm-3 col-md-3 col-lg-3" readonly />
@@ -99,7 +103,7 @@
                     <div class="q-gutter-md row"> -->
                     <q-select flat outlined class="col-xs-12 col-sm-6 col-md-6 col-lg-6" v-model="Pqrs.IdBarrio"
                         use-input hide-selected fill-input input-debounce="300" :options="barriosFiltrados"
-                        option-label="NombreBarrio" option-value="IdBarrio" emit-value map-options label="Barrio o corregimiento"
+                        option-label="Nombre" option-value="IdBarrio" emit-value map-options label="Barrio o corregimiento"
                         @filter="filtrarBarrios" lazy-rules :rules="[Utils.reglaSelect]">
 
                         <template v-slot:no-option>
@@ -135,6 +139,7 @@
                     </div>
 
                 </q-form>
+                </q-card>
 
                 <q-dialog v-model="mostrarDialogoTercero">
                     <q-card style="width: 800px; max-width: 90vw;">
@@ -156,26 +161,25 @@
 
                 </q-dialog>
 
-                <q-dialog v-model="mostrarDialogoPqrs" maximized full-width>
-                    <q-card style="width: 800px; max-width: 90vw;">
-                        <q-toolbar class="bg-blue-grey-9 text-white">
-                            <q-toolbar-title>
-                                Pqrs
-                            </q-toolbar-title>
-                            <q-btn flat icon="close" v-close-popup>
+                <q-dialog v-model="mostrarDialogoPqrs">
+                    <q-card class="bg-white q-pa-lg" style="width: 1100px; max-width: 95vw; border-radius: 18px;">
+                        <div class="row items-center justify-between q-mb-md">
+                            <div class="text-subtitle1 text-weight-medium text-grey-9">
+                                Gestor de PQRS / Órdenes
+                            </div>
+                            <q-btn flat round dense icon="close" v-close-popup>
                                 <q-tooltip content-class="bg-white text-primary">Cerrar</q-tooltip>
                             </q-btn>
-                        </q-toolbar>
-                        <q-card-section class="q-pa-md">
-                            <Tramites class="q-pa-md" :terceroData="terceroSeleccionado" :isDialogActivado="true"
+                        </div>
+                        <q-separator class="q-mb-md" />
+                        <q-card-section class="q-pa-none">
+                            <Tramites class="full-width" :terceroData="terceroSeleccionado" :isDialogActivado="true"
                                 @editar-pqrs="PqrsEdit" />
                         </q-card-section>
-
-
                     </q-card>
 
                 </q-dialog>
-            </main>
+            
         </section>
     </q-page>
 </template>

@@ -2,18 +2,20 @@
 
     <div class="q-gutter-md">
 
-        <!-- Título -->
-        <div class="text-h5 text-black text-weight-bold q-mb-md flex items-center justify-between">
-            <div>
-                <q-icon name="assignment" class="q-mr-sm" /> Gestor de PQRS / Órdenes
+        <!-- Título / Buscador -->
+        <div class="row items-center q-mb-md q-col-gutter-sm">
+            <div class="col-12 col-md-8">
+                <q-input dense outlined debounce="300" v-model="filtro"
+                    placeholder="Buscar por número, técnico o estado..." clearable prepend-inner-icon="search" />
             </div>
-            <q-btn color="black" label="Actualizar" icon="refresh" @click="cargarPqrs" />
+
+            <div class="col-12 col-md-auto flex justify-end q-mt-sm q-mt-md-0">
+                <q-btn color="black" label="Actualizar" icon="refresh" @click="cargarPqrs" />
+            </div>
         </div>
 
         <!-- Filtro de búsqueda -->
-        <q-input dense outlined debounce="300" v-model="filtro" placeholder="Buscar por número, técnico o estado..."
-            clearable prepend-inner-icon="search" class="bg-white" />
-
+       
         <!-- Tabla de PQRS -->
         <q-table :rows="filtradas" :columns="columnas" row-key="IdPqrs" flat bordered dense :loading="cargando"
             no-data-label="No hay registros disponibles" separator="cell">

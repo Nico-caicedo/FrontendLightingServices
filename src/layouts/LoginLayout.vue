@@ -106,13 +106,13 @@
             </div>
 
             <div class="q-mt-lg">
-              <q-btn
+              <!-- <q-btn
                 outline
                 color="white"
                 label="Conocer más del sistema"
                 class="info-btn"
                 no-caps
-              />
+              /> -->
             </div>
           </div>
         </div>
