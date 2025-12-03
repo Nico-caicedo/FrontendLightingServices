@@ -233,7 +233,7 @@ async function cargarGoogleMaps() {
     else {
       const script = document.createElement('script')
       script.src =
-        'https://maps.googleapis.com/maps/api/js?key=AIzaSyCKZ3VPgXSiG0COYvCfpNkAWMbT0KkBkRQ&libraries=geometry,drawing'
+        ''
       // 👆 eliminé "marker" porque no todos los proyectos tienen habilitada esa librería
       script.async = true
       script.defer = true
